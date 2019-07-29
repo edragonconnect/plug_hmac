@@ -36,7 +36,7 @@ defmodule ExAuth do
           |> error_handler.auth_error(:permission_denied)
           |> halt
         else
-          conn
+          assign(conn, :client_id, credential["id"])
         end
 
       other ->
@@ -54,7 +54,9 @@ defmodule ExAuth do
     Base.encode64(:crypto.hmac(:sha256, secret, Enum.join(content_to_sign)))
   end
 
-  def make_header(client_id, secret, method, path, query_string, body) do
+  def make_header(client_id, method, path, query_string, body) do
+    secret = get_secret(client_id)
+
     nonce =
       :crypto.strong_rand_bytes(20) |> Base.encode64() |> binary_part(0, 20)
       |> URI.encode_www_form()
