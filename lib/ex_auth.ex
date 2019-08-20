@@ -39,7 +39,7 @@ defmodule ExAuth do
           assign(conn, :client_id, credential["id"])
         end
 
-      other ->
+      _ ->
         conn
         |> error_handler.auth_error(:invalid_auth_header)
         |> halt
