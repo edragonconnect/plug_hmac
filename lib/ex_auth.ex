@@ -57,12 +57,12 @@ defmodule ExAuth do
   def make_header(client_id, method, path, query_string, body) do
     secret = get_secret(client_id)
 
-    nonce =
-      :crypto.strong_rand_bytes(20) |> Base.encode64() |> binary_part(0, 20)
-      |> URI.encode_www_form()
+    nonce = :crypto.strong_rand_bytes(20) |> Base.encode64() |> binary_part(0, 20)
+
+    uriencode_nonce = nonce |> URI.encode_www_form()
 
     signature = sign(secret, [method, path, query_string, body, nonce]) |> URI.encode_www_form()
     client_id = URI.encode_www_form(client_id)
-    "hmac id=#{client_id},signature=#{signature},nonce=#{nonce}"
+    "hmac id=#{client_id},signature=#{signature},nonce=#{uriencode_nonce}"
   end
 end
