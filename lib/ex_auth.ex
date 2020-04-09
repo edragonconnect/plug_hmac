@@ -8,41 +8,41 @@ defmodule ExAuth do
   @behaviour Plug
   import Plug.Conn
 
-  def init(opts), do: opts
+  def init(opts) do
+    case opts[:error_handler] do
+      nil ->
+        raise "Must defined error_handler when use the ExAuth plug."
+      error_handler when is_atom(error_handler) ->
+        if function_exported?(error_handler, :auth_error, 2) do
+          Keyword.put(opts, :error_handler, &error_handler.auth_error/2)
+        else
+          raise "Must defined auth_error/2 for #{error_handler} when use the ExAuth plug."
+        end
+      error_handler when is_function(error_handler, 2) ->
+        opts
+      error_handler ->
+        raise "Wrong error_handler: #{inspect(error_handler)}"
+    end
+  end
 
-  def call(conn, error_handler: error_handler) do
+  def call(conn, opts) do
     case get_req_header(conn, "authorization") do
       ["hmac " <> credential] ->
-        credential =
-          credential
-          |> String.split(",", trim: true)
-          |> Enum.map(fn part ->
-            [k, v] = String.split(part, "=", trim: true)
-            {URI.decode_www_form(String.trim(k)), URI.decode_www_form(String.trim(v))}
-          end)
-          |> Enum.into(%{})
+        credential = split_params_from_string(credential)
 
-        secret = get_secret(credential["id"])
-
-        if secret == nil ||
-             sign(secret, [
-               conn.method,
-               conn.request_path,
-               conn.query_string,
-               conn.assigns[:raw_body],
-               credential["nonce"]
-             ]) != credential["signature"] do
-          conn
-          |> error_handler.auth_error(:permission_denied)
-          |> halt
-        else
+        if check_sign?(credential, conn) do
           assign(conn, :client_id, credential["id"])
+        else
+          error_handler = opts[:error_handler]
+          conn
+          |> error_handler.(:permission_denied)
+          |> halt()
         end
-
       _ ->
+        error_handler = opts[:error_handler]
         conn
-        |> error_handler.auth_error(:invalid_auth_header)
-        |> halt
+        |> error_handler.(:invalid_auth_header)
+        |> halt()
     end
   end
 
@@ -50,19 +50,65 @@ defmodule ExAuth do
     Application.get_env(:ex_auth, :secrets)[client_id]
   end
 
+  @compile {:inline, split_params_from_string: 1}
+  def split_params_from_string(string) do
+    string
+    |> String.split(",", trim: true)
+    |> Map.new(
+         fn part ->
+           String.split(part, "=", trim: true)
+           |> Enum.map(
+                fn v ->
+                  String.trim(v)
+                  |> URI.decode_www_form()
+                end
+              )
+           |> case do
+                [k, v] -> {k, v}
+                [k] -> {k, ""}
+              end
+         end
+       )
+  end
+
+  def check_sign?(credential, conn) do
+    with signature when signature != nil and signature != "" <- credential["signature"],
+         id when id != nil and id != "" <- credential["id"],
+         secret when secret != nil <- get_secret(id) do
+      sign(
+        secret,
+        [
+          conn.method,
+          conn.request_path,
+          conn.query_string,
+          conn.assigns[:raw_body],
+          credential["nonce"]
+        ]
+      ) == signature
+    else
+      _ -> false
+    end
+  end
+
+  @compile {:inline, sign: 2}
   def sign(secret, content_to_sign) do
-    Base.encode64(:crypto.hmac(:sha256, secret, Enum.join(content_to_sign)))
+    :crypto.hmac(:sha256, secret, Enum.join(content_to_sign))
+    |> Base.encode64()
   end
 
   def make_header(client_id, method, path, query_string, body) do
+    nonce =
+      :crypto.strong_rand_bytes(20)
+      |> Base.encode64()
+      |> binary_part(0, 20)
+
     secret = get_secret(client_id)
+    signature =
+      sign(secret, [method, path, query_string, body, nonce])
+      |> URI.encode_www_form()
 
-    nonce = :crypto.strong_rand_bytes(20) |> Base.encode64() |> binary_part(0, 20)
-
-    uriencode_nonce = nonce |> URI.encode_www_form()
-
-    signature = sign(secret, [method, path, query_string, body, nonce]) |> URI.encode_www_form()
     client_id = URI.encode_www_form(client_id)
+    uriencode_nonce = URI.encode_www_form(nonce)
     "hmac id=#{client_id},signature=#{signature},nonce=#{uriencode_nonce}"
   end
 end
