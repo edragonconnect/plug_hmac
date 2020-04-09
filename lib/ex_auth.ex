@@ -13,11 +13,7 @@ defmodule ExAuth do
       nil ->
         raise "Must defined error_handler when use the ExAuth plug."
       error_handler when is_atom(error_handler) ->
-        if function_exported?(error_handler, :auth_error, 2) do
-          Keyword.put(opts, :error_handler, &error_handler.auth_error/2)
-        else
-          raise "Must defined auth_error/2 for #{error_handler} when use the ExAuth plug."
-        end
+        Keyword.put(opts, :error_handler, &error_handler.auth_error/2)
       error_handler when is_function(error_handler, 2) ->
         opts
       error_handler ->

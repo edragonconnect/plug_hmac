@@ -7,11 +7,6 @@ defmodule ExAuthTest do
       conn
     end
   end
-  defmodule WrongHandler do
-    def auth_error(conn) do
-      conn
-    end
-  end
 
   test "split params from string" do
     string = "id=test_id,signature=hMQB2X2ATYntgVskMVW0qOOn729J0mipCvQtqmWnQrk%3D,nonce=asd123"
@@ -117,10 +112,6 @@ defmodule ExAuthTest do
 
     assert ExAuth.init(error_handler: Handler)
            |> is_list() == true
-
-    assert_raise RuntimeError,
-                 "Must defined auth_error/2 for Elixir.ExAuthTest.WrongHandler when use the ExAuth plug.",
-                 fn -> ExAuth.init(error_handler: WrongHandler) end
 
     assert_raise RuntimeError,
                  "Must defined error_handler when use the ExAuth plug.",
