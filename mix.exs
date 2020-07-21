@@ -1,10 +1,10 @@
-defmodule ExAuth.MixProject do
+defmodule PlugHmac.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :ex_auth,
-      version: "0.2.1",
+      app: :plug_hmac,
+      version: "0.3.0",
       elixir: "~> 1.6",
       start_permanent: Mix.env() == :prod,
       deps: deps()

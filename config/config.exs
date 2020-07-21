@@ -10,11 +10,11 @@ use Mix.Config
 
 # You can configure your application as:
 #
-#     config :ex_auth, key: :value
+#     config :plug_hmac, key: :value
 #
 # and access this configuration in your application as:
 #
-#     Application.get_env(:ex_auth, :key)
+#     Application.get_env(:plug_hmac, :key)
 #
 # You can also configure a 3rd-party app:
 #

@@ -1,15 +1,15 @@
-# ExAuth
+# PlugHmac
 
 **Auth Plug**
 
 ## Installation
 
-The package can be installed by adding `ex_auth` to your list of dependencies in `mix.exs`:
+The package can be installed by adding `plug_hmac` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:ex_auth, git: "git@ssh.dev.azure.com:v3/edctech/ex_auth/ex_auth", tag: "0.2.0"}
+    {:plug_hmac, "~> 0.3"}
   ]
 end
 ```
@@ -23,13 +23,13 @@ Add `body_reader` to your Phoenix's `Endpoint`
 plug Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],
     pass: ["*/*"],
-    body_reader: {ExAuth.CacheBodyReader, :read_body, []},
+    body_reader: {PlugHmac.CacheBodyReader, :read_body, []},
     json_decoder: Phoenix.json_library()
 ```
 
 Setting `client_id` & `secrets`
 ```elixir
-config :ex_auth,
+config :plug_hmac,
   secrets: %{
     "test_id" => "/dXOQgl57dXHT5LxHgtjXrxcbgGrUODvVZjcC8h4iFhTLGVTlwZw0W+vsA2lCOK8"
   }
@@ -39,9 +39,9 @@ config :ex_auth,
 ### For Backend
 
 ```elixir
-plug ExAuth, auth_handler: __MODULE__
+plug PlugHmac, auth_handler: __MODULE__
 # or
-plug ExAuth, auth_handler: fun/2
+plug PlugHmac, auth_handler: fun/2
 
 # if set module must def the auth_error/2 function
 def auth_error(conn, _error) do
@@ -54,7 +54,7 @@ end
 
 ### For Client
 ```elixir
-ExAuth.make_header("test_id", "GET", "/api/test_auth", "a1=123&a2=456", "body string")
+PlugHmac.make_header("test_id", "GET", "/api/test_auth", "a1=123&a2=456", "body string")
 "hmac id=test_id,signature=xpSI4lZe5c%2BxlNe%2BUK6MQU8RHZNTjL1CTgQLbFamoYU%3D,nonce=vrlaY%2BzdC2S7cdWEXLiN"
 ```
 
@@ -66,7 +66,7 @@ ExAuth.make_header("test_id", "GET", "/api/test_auth", "a1=123&a2=456", "body st
 Authorization: hmac id=test_id,signature=xpSI4lZe5c%2BxlNe%2BUK6MQU8RHZNTjL1CTgQLbFamoYU%3D,nonce=vrlaY%2BzdC2S7cdWEXLiN
 ```
 
-`ExAuth` `plug`会校验`Authorization`值的有效性
+`PlugHmac` `plug`会校验`Authorization`值的有效性
 
 ### 参数说明
 

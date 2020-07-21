@@ -1,4 +1,4 @@
-defmodule ExAuth do
+defmodule PlugHmac do
   @moduledoc """
   A Plug to validate and generate `Authorization` header.
   Authorization = hmac id=URI_encode(client_id),signature=URI_encode(Signature),nonce=URI_encode(Nonce)
@@ -11,7 +11,7 @@ defmodule ExAuth do
   def init(opts) do
     case opts[:error_handler] do
       nil ->
-        raise "Must defined error_handler when use the ExAuth plug."
+        raise "Must defined error_handler when use the PlugHmac plug."
       error_handler when is_atom(error_handler) ->
         Keyword.put(opts, :error_handler, &error_handler.auth_error/2)
       error_handler when is_function(error_handler, 2) ->
@@ -43,7 +43,7 @@ defmodule ExAuth do
   end
 
   defp get_secret(client_id) do
-    Application.get_env(:ex_auth, :secrets)[client_id]
+    Application.get_env(:plug_hmac, :secrets)[client_id]
   end
 
   @compile {:inline, split_params_from_string: 1}
