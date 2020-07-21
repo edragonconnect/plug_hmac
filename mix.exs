@@ -7,7 +7,10 @@ defmodule PlugHmac.MixProject do
       version: "0.3.0",
       elixir: "~> 1.6",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      docs: [extras: ["README.md"]],
+      description: "Phoniex Plug of Hmac Auth",
+      package: package()
     ]
   end
 
@@ -18,10 +21,18 @@ defmodule PlugHmac.MixProject do
     ]
   end
 
+  def package do
+    [
+      licenses: ["MIT"],
+      links: %{"Github" => "https://github.com/edragonconnect/plug_hmac"}
+    ]
+  end
+
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:plug, "~> 1.0"}
+      {:plug, "~> 1.0"},
+      {:ex_doc, ">= 0.0.0"}
     ]
   end
 end
