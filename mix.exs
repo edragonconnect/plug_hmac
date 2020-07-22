@@ -4,7 +4,7 @@ defmodule PlugHmac.MixProject do
   def project do
     [
       app: :plug_hmac,
-      version: "0.3.0",
+      version: "0.3.1",
       elixir: "~> 1.6",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -32,7 +32,7 @@ defmodule PlugHmac.MixProject do
   defp deps do
     [
       {:plug, "~> 1.0"},
-      {:ex_doc, ">= 0.0.0"}
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
     ]
   end
 end
