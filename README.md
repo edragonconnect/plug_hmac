@@ -9,7 +9,7 @@ The package can be installed by adding `plug_hmac` to your list of dependencies 
 ```elixir
 def deps do
   [
-    {:plug_hmac, "~> 0.3"}
+    {:plug_hmac, "~> 0.4"}
   ]
 end
 ```
@@ -27,35 +27,51 @@ plug Plug.Parsers,
     json_decoder: Phoenix.json_library()
 ```
 
-Setting `client_id` & `secrets`
-```elixir
-config :plug_hmac,
-  secrets: %{
-    "test_id" => "/dXOQgl57dXHT5LxHgtjXrxcbgGrUODvVZjcC8h4iFhTLGVTlwZw0W+vsA2lCOK8"
-  }
-```
-
-
 ### For Backend
 
-```elixir
-plug PlugHmac, auth_handler: __MODULE__
-# or
-plug PlugHmac, auth_handler: fun/2
+* error_handler: setting error handler module
+* secret_handler: setting secret handler module
+* hmac_algo: hmac support algorithem **[:md5, :md4, :sha, :sha224, :sha256, :sha384, :sha512, :sha3_224, :sha3_256, :sha3_384, :sha3_512]**
+* client_signature_name: the http header name which use for get authorization data
 
-# if set module must def the auth_error/2 function
-def auth_error(conn, _error) do
+```elixir
+plug PlugHmac,
+  error_handler: __MODULE__,
+  secret_handler: __MODULE__,
+  hmac_algo: :sha256,
+  client_signature_name: "authorization"
+
+@behaviour PlugHmac.ErrorHandler
+@behaviour PlugHmac.SecretHandler
+
+## callback for error_handler
+def handle(conn, _error) do
   # you can case error here 
   # or update conn here
   # must return conn
   conn
 end
+
+## callback for secret_handler
+def get_secret(client_id) do
+  # get your secret key
+  {:ok, your_secret_key}
+end
 ```
 
 ### For Client
 ```elixir
-PlugHmac.make_header("test_id", "GET", "/api/test_auth", "a1=123&a2=456", "body string")
-"hmac id=test_id,signature=xpSI4lZe5c%2BxlNe%2BUK6MQU8RHZNTjL1CTgQLbFamoYU%3D,nonce=vrlaY%2BzdC2S7cdWEXLiN"
+# make_header(
+#         hmac_algo,
+#         secret_handler,
+#         client_id,
+#         method,
+#         path,
+#         query_string,
+#         body,
+#         nonce \\ nil
+#      )
+PlugHmac.make_header(:sha256, __MODULE__, "test_id", "GET", "/api/test_auth", "a1=123&a2=456", "body string")
 ```
 
 ## Principle
@@ -66,7 +82,7 @@ PlugHmac.make_header("test_id", "GET", "/api/test_auth", "a1=123&a2=456", "body 
 Authorization: hmac id=test_id,signature=xpSI4lZe5c%2BxlNe%2BUK6MQU8RHZNTjL1CTgQLbFamoYU%3D,nonce=vrlaY%2BzdC2S7cdWEXLiN
 ```
 
-`PlugHmac` `plug`会校验`Authorization`值的有效性
+`PlugHmac` `plug` 会校验 `Authorization` 值的有效性
 
 ### 参数说明
 
