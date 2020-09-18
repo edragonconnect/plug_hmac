@@ -67,9 +67,11 @@ defmodule ExAuthTest do
         "body" => "{\"hello\": \"world\"}"
       })
 
+    secret_handler = &SecretHandler.get_secret/1
+
     assert PlugHmac.check_sign?(
              :sha256,
-             SecretHandler,
+             secret_handler,
              %{
                "id" => "test_id",
                "nonce" => "asd123"
@@ -79,7 +81,7 @@ defmodule ExAuthTest do
 
     assert PlugHmac.check_sign?(
              :sha256,
-             SecretHandler,
+             secret_handler,
              %{
                "id" => "test_id",
                "nonce" => "asd123",
@@ -90,7 +92,7 @@ defmodule ExAuthTest do
 
     assert PlugHmac.check_sign?(
              :sha256,
-             SecretHandler,
+             secret_handler,
              %{
                "id" => "test_id",
                "nonce" => "asd123",
@@ -115,7 +117,7 @@ defmodule ExAuthTest do
 
     credential = PlugHmac.split_params_from_string(credential)
 
-    assert PlugHmac.check_sign?(:sha256, SecretHandler, credential, conn) == true
+    assert PlugHmac.check_sign?(:sha256, secret_handler, credential, conn) == true
 
     nonce = PlugHmac.make_nonce()
 
@@ -133,7 +135,7 @@ defmodule ExAuthTest do
 
     credential = PlugHmac.split_params_from_string(credential)
 
-    assert PlugHmac.check_sign?(:sha256, SecretHandler, credential, body_conn) == true
+    assert PlugHmac.check_sign?(:sha256, secret_handler, credential, body_conn) == true
   end
 
   test "plug init" do
@@ -168,7 +170,7 @@ defmodule ExAuthTest do
       })
 
     error_handler = ErrorHandler
-    secret_handler = SecretHandler
+    secret_handler = &SecretHandler.get_secret/1
     hmac_algo = :sha256
 
     assert PlugHmac.call(conn,
