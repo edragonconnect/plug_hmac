@@ -113,6 +113,12 @@ defmodule PlugHmac do
     |> Base.encode64()
   end
 
+  def make_header(hmac_algo, get_secret_fun, method, path, query_string, body, nonce)
+      when is_function(get_secret_fun, 0) do
+    {:ok, client_id, secret} = get_secret_fun.()
+    make_header(hmac_algo, client_id, secret, method, path, query_string, body, nonce)
+  end
+
   def make_header(
         hmac_algo,
         secret_handler,
@@ -122,9 +128,16 @@ defmodule PlugHmac do
         query_string,
         body,
         nonce \\ nil
-      ) do
-    {:ok, secret} = secret_handler.get_secret(client_id)
+      )
 
+  def make_header(hmac_algo, secret_handler, client_id, method, path, query_string, body, nonce)
+      when is_atom(secret_handler) and is_binary(client_id) do
+    {:ok, secret} = secret_handler.get_secret(client_id)
+    make_header(hmac_algo, client_id, secret, method, path, query_string, body, nonce)
+  end
+
+  def make_header(hmac_algo, client_id, secret, method, path, query_string, body, nonce)
+      when is_binary(client_id) and is_binary(secret) do
     nonce =
       if is_nil(nonce) do
         make_nonce()
