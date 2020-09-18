@@ -25,17 +25,31 @@ defmodule PlugHmac do
   ]
 
   def init(opts) do
-    with {:check_error_handler, true} <-
-           {:check_error_handler,
-            is_atom(opts[:error_handler]) and Code.ensure_loaded?(opts[:error_handler])},
-         {:check_secret_handler, true} <-
-           {:check_secret_handler,
-            is_atom(opts[:secret_handler]) and Code.ensure_loaded?(opts[:secret_handler])},
+    with {:check_error_handler, error_handler}
+         when is_atom(error_handler) or is_function(error_handler, 1) <-
+           {:check_error_handler, opts[:error_handler]},
+         {:check_secret_handler, secret_handler}
+         when is_atom(secret_handler) or is_function(secret_handler, 1) <-
+           {:check_secret_handler, opts[:secret_handler]},
          {:check_hmac_algo, true} <- {:check_hmac_algo, opts[:hmac_algo] in @base_hamc_algo},
          {:check_client_signature_name, true} <-
            {:check_client_signature_name,
             is_bitstring(opts[:client_signature_name]) or is_nil(opts[:client_signature_name])} do
-      opts
+      error_handler =
+        if is_atom(error_handler) do
+          &error_handler.handle/1
+        else
+          error_handler
+        end
+
+      secret_handler =
+        if is_atom(secret_handler) do
+          &secret_handler.get_secret/1
+        else
+          secret_handler
+        end
+
+      Keyword.merge(opts, error_handler: error_handler, secret_handler: secret_handler)
     else
       error ->
         raise "check_opts_error with #{inspect(error)} with opts: #{inspect(opts)}"
@@ -88,7 +102,7 @@ defmodule PlugHmac do
     with {:get_signature, signature} when signature != nil and signature != "" <-
            {:get_signature, credential["signature"]},
          {:get_client_id, id} when id != nil and id != "" <- {:get_client_id, credential["id"]},
-         {:ok, secret} when secret != nil <- secret_handler.get_secret(id) do
+         {:ok, secret} when secret != nil <- secret_handler.(id) do
       sign(
         hmac_algo,
         secret,
