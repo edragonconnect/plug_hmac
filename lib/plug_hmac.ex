@@ -37,7 +37,7 @@ defmodule PlugHmac do
             is_bitstring(opts[:client_signature_name]) or is_nil(opts[:client_signature_name])} do
       error_handler =
         if is_atom(error_handler) do
-          &error_handler.handle/1
+          &error_handler.handle/2
         else
           error_handler
         end
@@ -70,13 +70,13 @@ defmodule PlugHmac do
           assign(conn, :client_id, credential["id"])
         else
           conn
-          |> error_handler.handle(:permission_denied)
+          |> error_handler.(:permission_denied)
           |> halt()
         end
 
       _ ->
         conn
-        |> error_handler.handle(:invalid_auth_header)
+        |> error_handler.(:invalid_auth_header)
         |> halt()
     end
   end
