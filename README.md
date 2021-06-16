@@ -9,7 +9,7 @@ The package can be installed by adding `plug_hmac` to your list of dependencies 
 ```elixir
 def deps do
   [
-    {:plug_hmac, "~> 0.4"}
+    {:plug_hmac, "~> 0.5.0"}
   ]
 end
 ```
