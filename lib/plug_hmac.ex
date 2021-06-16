@@ -121,9 +121,19 @@ defmodule PlugHmac do
     end
   end
 
+  if Code.ensure_loaded?(:crypto) and function_exported?(:crypto, :mac, 4) do
+    defp hmac_fun(digest, key), do: &:crypto.mac(:hmac, digest, key, &1)
+  else
+    defp hmac_fun(digest, key), do: &:crypto.hmac(digest, key, &1)
+  end
+
+  def crypto_hmac(method, key, body) do
+    hmac_fun(method, key).(body)
+  end
+
   @compile {:inline, sign: 3}
   def sign(hmac_algo, secret, content_to_sign) do
-    :crypto.hmac(hmac_algo, secret, Enum.join(content_to_sign))
+    crypto_hmac(hmac_algo, secret, Enum.join(content_to_sign))
     |> Base.encode64()
   end
 

@@ -169,7 +169,7 @@ defmodule ExAuthTest do
         "body" => ""
       })
 
-    error_handler = ErrorHandler
+    error_handler = &ErrorHandler.handle/2
     secret_handler = &SecretHandler.get_secret/1
     hmac_algo = :sha256
 
